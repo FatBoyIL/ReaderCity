@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "774896307767",
+    "firebase_url": "https://readerapp2-5658a-default-rtdb.firebaseio.com",
+    "project_id": "readerapp2-5658a",
+    "storage_bucket": "readerapp2-5658a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774896307767:android:39a75e95d63852c5be79b2",
+        "android_client_info": {
+          "package_name": "com.jacknguyen.readerapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCz69QjJ3fWLTkg-qMRAA4uvhowhKZPSQk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
