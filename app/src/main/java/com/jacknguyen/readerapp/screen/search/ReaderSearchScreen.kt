@@ -54,18 +54,21 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.room.util.query
 import coil3.compose.rememberAsyncImagePainter
 import com.jacknguyen.readerapp.components.InputField
 import com.jacknguyen.readerapp.components.ReaderAppBar
 import com.jacknguyen.readerapp.model.BookReaderApp
 import com.jacknguyen.readerapp.navigation.ReaderScreen
-@Preview
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ReaderSearchScreen(
-    navController: NavController= NavController(LocalContext.current)
-) {
+    navController: NavController,viewModelSearch: ReaderSearchViewModel = hiltViewModel()
+)
+{
     Scaffold(topBar = {
         ReaderAppBar(
             title = "Searching Your Book",
@@ -82,7 +85,9 @@ fun ReaderSearchScreen(
          paddingValue ->
             Column(modifier = Modifier.padding(paddingValue).fillMaxSize()) {
                 SearchForm(modifier = Modifier.padding(16.dp),
-                    hint = "Search for books, authors, genres...",)
+                    hint = "Search for books, authors, genres...", viewModel = viewModelSearch,){
+                    query -> viewModelSearch.searchBooks(query)
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 BookSearchList(navController = navController)
             }
@@ -189,12 +194,15 @@ fun BookRow(book: BookReaderApp, navController: NavController) {
 fun SearchForm(
     modifier: Modifier = Modifier,
     loading: Boolean = false,
+    viewModel: ReaderSearchViewModel,
     hint: String = "Search",
     onSearch: (String) -> Unit = {}
 ) {
     val searchQuery = rememberSaveable { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val isValid = searchQuery.value.trim().isNotEmpty()
+    val isValid = remember(searchQuery.value) {
+        searchQuery.value.trim().isNotEmpty()
+    }
 
     OutlinedTextField(
         value = searchQuery.value,
@@ -223,8 +231,10 @@ fun SearchForm(
                     strokeWidth = 2.dp
                 )
             } else if (searchQuery.value.isNotEmpty()) {
-                IconButton(onClick = { searchQuery.value = "" }) {
-                    Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Clear")
+                IconButton(onClick = {
+                    searchQuery.value = ""// Clear search results when clearing the query
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Clear",)
                 }
             }
         },
@@ -232,11 +242,10 @@ fun SearchForm(
         shape = RoundedCornerShape(50),
         keyboardActions = KeyboardActions(
             onDone = {
-                if (isValid) {
-                    onSearch(searchQuery.value.trim())
-                    keyboardController?.hide()
-                    searchQuery.value = ""
-                }
+                if (!isValid) return@KeyboardActions
+                onSearch(searchQuery.value.trim())
+                searchQuery.value = ""
+                keyboardController?.hide()
             }
         ),
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
