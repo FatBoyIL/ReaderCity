@@ -23,13 +23,15 @@ fun ReaderNavigation() {
             ReaderHomeScreen(navController = navController)
         }
         composable(ReaderScreen.SearchScreen.name) {
-            ReaderSearchScreen(navController = navController)
+            val viewModel = androidx.hilt.navigation.compose.hiltViewModel<com.jacknguyen.readerapp.screen.search.ReaderSearchViewModel>()
+            ReaderSearchScreen(navController = navController,viewModel)
+        }
+        composable(ReaderScreen.LoginScreen.name){
+            LoginScreen(navController = navController)
         }
          composable(ReaderScreen.ReaderStatsScreen.name){
              ReaderStatScreen(navController = navController)
          }
-        composable(ReaderScreen.LoginScreen.name){
-            LoginScreen(navController = navController)
-        }
+
     }
 }
