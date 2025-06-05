@@ -1,6 +1,7 @@
 package com.jacknguyen.readerapp.repository
 
 import com.jacknguyen.readerapp.data.DataOrException
+import com.jacknguyen.readerapp.data.Resource
 import com.jacknguyen.readerapp.model.BookAPI
 import com.jacknguyen.readerapp.model.Item
 import com.jacknguyen.readerapp.network.BookApiInterface
@@ -8,34 +9,32 @@ import javax.inject.Inject
 
 class BookRepository @Inject constructor(private val api: BookApiInterface) {
 
-    private val bookInfoDataOrException = DataOrException<Item, Boolean, Exception>()
-    private val dataOrException = DataOrException<List<Item>, Boolean, Exception>()
-    suspend fun getAllBooks(query: String): DataOrException<List<Item>, Boolean, Exception> {
-        try {
-            dataOrException.loading = true
-            dataOrException.data = api.getAllBooks(query).items
-            if(dataOrException.data!!.isNotEmpty()) {
-                dataOrException.loading = false
+
+    suspend fun getAllBooks(query: String): Resource<List<Item>> {
+      return try {
+            Resource.Loading(true)
+            val itemList = api.getAllBooks(query).items
+            if (itemList.isNotEmpty()) {
+                Resource.Loading(false)
             }
+            Resource.Success(itemList)
 
         } catch (e: Exception) {
-            dataOrException.e = e
+            Resource.Error("Error fetching books: ${e.message.toString()}")
         }
-        return dataOrException
+
     }
 
-    suspend fun getBookInfo(bookId: String): DataOrException<Item, Boolean, Exception> {
+    suspend fun getBookInfo(bookId: String): Resource<Item> {
 
-        try {
-            bookInfoDataOrException.loading = true
-            bookInfoDataOrException.data = api.getBookInfo(bookId)
-           if (bookInfoDataOrException.data.toString().isNotEmpty()) {
-                bookInfoDataOrException.loading = false
-            }
+       val response = try {
+            Resource.Loading(data = true)
+            api.getBookInfo(bookId)
         } catch (e: Exception) {
-            bookInfoDataOrException.e = e
+           return  Resource.Error("Error fetching book info: ${e.message.toString()}")
         }
-        return bookInfoDataOrException
+        Resource.Loading(data = false)
+        return Resource.Success(response)
     }
 
 }

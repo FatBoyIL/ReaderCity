@@ -373,7 +373,10 @@ fun ReaderAppBar(navController: NavController, title: String, showProfile: Boole
                         contentDescription = "Situation Icon",
                         modifier = Modifier
                             .size(32.dp)
-                            .clickable { onPressedSituationButton.invoke() },
+                            .clickable {
+
+                                onPressedSituationButton.invoke()
+                                       },
                         tint = Color(0xFF2196F3)
                     )
                 }
