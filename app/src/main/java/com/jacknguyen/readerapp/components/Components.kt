@@ -1,6 +1,10 @@
 package com.jacknguyen.readerapp.components
 
+import android.view.MotionEvent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +50,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -55,6 +60,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -66,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
+import com.jacknguyen.readerapp.R
 import com.jacknguyen.readerapp.model.BookReaderApp
 import com.jacknguyen.readerapp.navigation.ReaderScreen
 
@@ -84,10 +92,10 @@ fun ReaderAppLogo(modifier: Modifier, textcolor: Color) {
         )
     )
 }
-@Preview
+
 @Composable
 fun ListCard(
-    book: BookReaderApp = BookReaderApp(id = "1", title = "Sample Book", authors = "Author Name", notes = "Notes"),
+    book: BookReaderApp,
     onPress: (String) -> Unit = {}
 ) {
     Card(
@@ -98,7 +106,7 @@ fun ListCard(
             .padding(16.dp)
             .width(200.dp)
             .height(250.dp)
-            .clickable { onPress(book.title ?: "") }
+            .clickable { onPress.invoke(book.title.toString()) }
     ) {
         Column(
             modifier = Modifier
@@ -111,7 +119,11 @@ fun ListCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Image(
-                    painter = rememberAsyncImagePainter("https://res.cloudinary.com/dlty5lwzh/image/upload/v1748810622/cld-sample-5.jpg"),
+                    painter = rememberAsyncImagePainter(
+                        book.photoUrl.toString().replace(
+                            "http://",
+                            "https://"
+                        )),
                     contentDescription = "Book Cover",
                     modifier = Modifier
                         .size(90.dp)
@@ -186,8 +198,58 @@ fun ListCard(
 
         }
     }
+
 }
 
+@ExperimentalComposeUiApi
+@Composable
+fun RatingBar(
+    modifier: Modifier = Modifier,
+    rating: Int,
+    onPressRating: (Int) -> Unit
+) {
+    var ratingState by remember {
+        mutableStateOf(rating)
+    }
+
+    var selected by remember {
+        mutableStateOf(false)
+    }
+    val size by animateDpAsState(
+        targetValue = if (selected) 42.dp else 34.dp,
+        spring(Spring.DampingRatioMediumBouncy)
+    )
+
+    Row(
+        modifier = Modifier.width(280.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        for (i in 1..5) {
+            Icon(
+                painter = painterResource(id = R.drawable.logohuybeo),
+                contentDescription = "star",
+                modifier = modifier
+                    .width(size)
+                    .height(size)
+                    .pointerInteropFilter {
+                        when (it.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                selected = true
+                                onPressRating(i)
+                                ratingState = i
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                selected = false
+                            }
+                        }
+                        true
+                    },
+                tint = if (i <= ratingState) Color(0xFFFFD700) else Color(0xFFA2ADB1)
+            )
+        }
+    }
+}
 @Composable
 fun BookRating(rating: Double) {
     Surface(
@@ -373,10 +435,7 @@ fun ReaderAppBar(navController: NavController, title: String, showProfile: Boole
                         contentDescription = "Situation Icon",
                         modifier = Modifier
                             .size(32.dp)
-                            .clickable {
-
-                                onPressedSituationButton.invoke()
-                                       },
+                            .clickable { onPressedSituationButton.invoke()},
                         tint = Color(0xFF2196F3)
                     )
                 }

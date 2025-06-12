@@ -2,7 +2,6 @@ package com.jacknguyen.readerapp.screen.home
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,28 +11,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,24 +36,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil3.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
-import com.jacknguyen.readerapp.components.BookRating
 import com.jacknguyen.readerapp.components.FABContent
 import com.jacknguyen.readerapp.components.ListCard
 import com.jacknguyen.readerapp.components.ReaderAppBar
-import com.jacknguyen.readerapp.components.RoundedButton
 import com.jacknguyen.readerapp.components.TitleOfBook
 import com.jacknguyen.readerapp.model.BookReaderApp
 import com.jacknguyen.readerapp.navigation.ReaderScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun ReaderHomeScreen(navController: NavController) {
+fun ReaderHomeScreen(navController: NavController, viewModel: ReaderHomeScreenViewModel = hiltViewModel()) {
     Scaffold(
         topBar = { ReaderAppBar(title = "Reader City", navController = navController) },
         floatingActionButton = { FABContent { navController.navigate(ReaderScreen.SearchScreen.name)} },
@@ -71,43 +60,25 @@ fun ReaderHomeScreen(navController: NavController) {
                 .padding(contentPadding)
                 .fillMaxSize()
         ) {
-            HomeContent(navController)
+            HomeContent(navController, viewModel)
         }
     }
 }
 
 @Composable
-fun HomeContent(navController: NavController) {
+fun HomeContent(navController: NavController, viewModel: ReaderHomeScreenViewModel) {
     //fake data BookReaderApp
-    val listOfBooks = listOf(
-        BookReaderApp(
-            id = "1",
-            title = "The Great Gatsby",
-            authors = "F. Scott Fitzgerald",
-            notes = "A classic novel set in the 1920s."
-        ),
-        BookReaderApp(
-            id = "2",
-            title = "To Kill a Mockingbird",
-            authors = "Harper Lee",
-            notes = "A novel about racial injustice in the Deep South."
-        ),
-        BookReaderApp(
-            id = "3",
-            title = "1984",
-            authors = "George Orwell",
-            notes = "A dystopian novel about totalitarianism and surveillance."
-        ),
-        BookReaderApp(
-            id = "4",
-            title = "Pride and Prejudice",
-            authors = "Jane Austen",
-            notes = "A romantic novel that critiques the British landed gentry."
-        ),
-
-    )
+    var listOfBooks = emptyList<BookReaderApp>()
     val userName = FirebaseAuth.getInstance().currentUser?.email?.split("@")?.get(0) ?: "Guest"
+    val userData = FirebaseAuth.getInstance().currentUser
 
+    if (!viewModel.dataViewModel.value.data.isNullOrEmpty()){
+        listOfBooks = viewModel.dataViewModel.value.data!!.toList().filter{
+            mBook ->
+            mBook.userId == userData?.uid.toString()
+        }
+        Log.d("contetn", "listOfBooks: $listOfBooks")
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,11 +146,11 @@ fun HomeContent(navController: NavController) {
                 }
 
         Spacer(modifier = Modifier.height(16.dp))
-        ListCard()
-        TitleOfBook(title = "List of Books")
-        ReadingRightNowArea(listOfBooks = listOfBooks,navController = navController
-        )
-
+        ReadingRightNowArea(listOfBooks = listOfBooks,
+            navController =navController )
+        TitleOfBook(title = "Reading List")
+        BookListArea(listOfBooks = listOfBooks,
+            navController = navController)
 //        BookListArea(
 //            listOfBooks = listOfBooks,
 //            navController = navController
@@ -201,7 +172,9 @@ fun BookListArea(listOfBooks: List<BookReaderApp>, navController: NavController)
     HorizontalScrollableComponent(
         listOfBooks
     ){
-
+        navController.navigate(
+            ReaderScreen.UpdateScreen.name + "/${it}"
+        )
     }
 }
 
@@ -218,7 +191,7 @@ fun HorizontalScrollableComponent(listOfBooks: List<BookReaderApp>,
     ) {
         for (book in listOfBooks) {
             ListCard(book = book){
-                onCardPressed(it)
+                onCardPressed(book.googleBookId.toString())
             }
         }
     }
